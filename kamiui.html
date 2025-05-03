@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>綾人チャレンジ</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #0f0f0f;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      overflow: hidden;
+      transition: background 0.5s ease;
+    }
+
+    .container {
+      text-align: center;
+      background: rgba(30, 30, 30, 0.85);
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 0 20px #00fff7, 0 0 60px #005bff;
+      max-width: 600px;
+      width: 90%;
+    }
+
+    h1 {
+      font-size: 40px;
+      margin-bottom: 30px;
+      color: #00ffe7;
+      text-shadow: 0 0 10px #00fff7;
+    }
+
+    .timer {
+      font-size: 64px;
+      margin-bottom: 30px;
+      color: #ffffff;
+      font-family: 'Courier New', monospace;
+      text-shadow: 0 0 15px #00ffd5;
+    }
+
+    button {
+      padding: 15px 40px;
+      font-size: 20px;
+      font-weight: bold;
+      margin: 10px;
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      background: linear-gradient(135deg, #005bff, #00ffee);
+      box-shadow: 0 0 10px #00ffe7;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px #00ffe7, 0 0 40px #005bff;
+    }
+
+    #result {
+      margin-top: 25px;
+      font-size: 26px;
+      font-weight: bold;
+      color: #fff;
+      text-shadow: 0 0 10px #fff;
+    }
+
+    .rainbow-bg {
+      animation: rainbow 3s linear infinite;
+      background: linear-gradient(270deg, red, orange, yellow, green, cyan, blue, violet);
+      background-size: 1400% 1400%;
+    }
+
+    @keyframes rainbow {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .flash {
+      animation: flash-effect 0.3s ease;
+    }
+
+    @keyframes flash-effect {
+      from { box-shadow: 0 0 100px #00fff7; }
+      to   { box-shadow: none; }
+    }
+
+    .scoreboard {
+      margin-top: 30px;
+      text-align: left;
+      color: #fff;
+      font-size: 18px;
+      max-height: 200px;
+      overflow-y: auto;
+      padding: 10px;
+      border-top: 1px solid #00ffe7;
+    }
+
+    .scoreboard p {
+      margin: 5px 0;
+      font-family: monospace;
+    }
+
+    .best-record {
+      margin-top: 10px;
+      font-size: 20px;
+      color: #00ffcc;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="container">
+    <h1>5.1秒で止めろ！</h1>
+    <div class="timer" id="display">0.000 秒</div>
+    <button onclick="start()">スタート</button>
+    <button onclick="stop()">ストップ</button>
+    <div id="result"></div>
+    <div class="best-record" id="bestRecord">ベスト記録：まだなし</div>
+    <div class="scoreboard" id="scoreboard">
+      <h3>スコア履歴</h3>
+    </div>
+  </div>
+
+  <!-- CDNサウンド -->
+  <audio id="success-sound" src="https://cdn.pixabay.com/audio/2022/03/15/audio_f8d8c0701c.mp3" preload="auto"></audio>
+  <audio id="fail-sound" src="https://cdn.pixabay.com/audio/2022/03/03/audio_40f327e527.mp3" preload="auto"></audio>
+  <audio id="alarm-sound" src="https://cdn.pixabay.com/audio/2022/03/16/audio_108d6f55df.mp3" preload="auto"></audio>
+
+  <script>
+    let startTime = null;
+    let interval = null;
+    let running = false;
+    let bestDiff = null;
+    let bestTime = null;
+
+    const successSound = document.getElementById('success-sound');
+    const failSound = document.getElementById('fail-sound');
+    const alarmSound = document.getElementById('alarm-sound');
+    const scoreboard = document.getElementById("scoreboard");
+    const bestRecord = document.getElementById("bestRecord");
+
+    function start() {
+      if (running) clearInterval(interval);
+      document.getElementById("result").textContent = "";
+      document.body.classList.remove("rainbow-bg");
+      document.body.style.backgroundColor = "#0f0f0f";
+      startTime = performance.now();
+      running = true;
+
+      interval = setInterval(() => {
+        const elapsed = (performance.now() - startTime) / 1000;
+        document.getElementById("display").textContent = elapsed.toFixed(3) + " 秒";
+      }, 10);
+    }
+
+    function stop() {
+      if (!running) return;
+
+      clearInterval(interval);
+      running = false;
+
+      const elapsed = (performance.now() - startTime) / 1000;
+      const diff = Math.abs(elapsed - 5.1);
+      const display = document.getElementById("display");
+      display.textContent = elapsed.toFixed(3) + " 秒";
+      const result = document.getElementById("result");
+
+      const container = document.getElementById("container");
+      container.classList.remove("flash");
+      setTimeout(() => container.classList.add("flash"), 10);
+
+      let judgment = "";
+      if (diff <= 0.05) {
+        judgment = "成功";
+        result.textContent = "あなたはまごうことなき綾人です";
+        result.style.color = "#00ff87";
+        document.body.classList.add("rainbow-bg");
+        successSound.play();
+
+        if (bestDiff === null || diff < bestDiff) {
+          bestDiff = diff;
+          bestTime = elapsed;
+          bestRecord.textContent = `ベスト記録：${bestTime.toFixed(3)} 秒（誤差 ±${bestDiff.toFixed(3)}）`;
+        }
+
+      } else if (diff >= 1.0) {
+        judgment = "カス";
+        result.textContent = "おいおいおい条約と違うね";
+        result.style.color = "#ffaa00";
+        alarmSound.play();
+      } else {
+        judgment = "失敗";
+        result.textContent = "残念！もう一度挑戦してみてください";
+        result.style.color = "#ff5555";
+        failSound.play();
+      }
+
+      const entry = document.createElement("p");
+      entry.textContent = `${elapsed.toFixed(3)} 秒 - ${judgment}`;
+      scoreboard.appendChild(entry);
+    }
+  </script>
+</body>
+</html>
