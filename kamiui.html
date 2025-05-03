@@ -113,6 +113,56 @@
       color: #00ffcc;
       font-weight: bold;
     }
+ 
+    .scoreboard {
+  margin-top: 30px;
+  text-align: left;
+  font-size: 18px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 10px;
+  border-top: 1px solid #00ffe7;
+  background: linear-gradient(to bottom, rgba(0,255,255,0.1), rgba(0,0,0,0.5));
+  border-radius: 10px;
+  box-shadow: inset 0 0 15px #00fff7;
+  backdrop-filter: blur(4px);
+  position: relative;
+  color: #fff;
+}
+
+/* スクロールバー装飾 (Chrome, Edge, Opera) */
+.scoreboard::-webkit-scrollbar {
+  width: 8px;
+}
+.scoreboard::-webkit-scrollbar-track {
+  background: rgba(0,0,0,0.4);
+}
+.scoreboard::-webkit-scrollbar-thumb {
+  background: linear-gradient(#00ffe7, #0077ff);
+  border-radius: 10px;
+}
+
+/* Firefox用スクロールバー */
+.scoreboard {
+  scrollbar-width: thin;
+  scrollbar-color: #00ffe7 rgba(0,0,0,0.4);
+}
+
+.scoreboard p {
+  margin: 6px 0;
+  font-family: monospace;
+  background: linear-gradient(to right, #00ffe7, #0077ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 6px #00fff7;
+  transition: all 0.3s ease;
+}
+
+.scoreboard p:hover {
+  transform: scale(1.03);
+  text-shadow: 0 0 12px #00f0ff, 0 0 24px #0077ff;
+}
+
   </style>
 </head>
 <body>
@@ -123,14 +173,15 @@
     <button onclick="stop()">ストップ</button>
     <div id="result"></div>
     <div class="best-record" id="bestRecord">ベスト記録：まだなし</div>
-    <div class="scoreboard" id="scoreboard">
+    <div class="scoreboard">
       <h3>スコア履歴</h3>
+      <div id="scoreboard"></div>
     </div>
   </div>
 
-  <!-- CDNサウンド -->
-  <audio id="success-sound" src="https://cdn.pixabay.com/audio/2022/03/15/audio_f8d8c0701c.mp3" preload="auto"></audio>
-  <audio id="fail-sound" src="https://cdn.pixabay.com/audio/2022/03/03/audio_40f327e527.mp3" preload="auto"></audio>
+  <!-- 効果音（CDN） -->
+  <audio id="success-sound" src="https://cdn.pixabay.com/audio/2023/03/21/audio_54b01c2e0d.mp3" preload="auto"></audio>
+  <audio id="fail-sound" src="https://cdn.pixabay.com/audio/2023/05/03/audio_97fa244cbc.mp3" preload="auto"></audio>
   <audio id="alarm-sound" src="https://cdn.pixabay.com/audio/2022/03/16/audio_108d6f55df.mp3" preload="auto"></audio>
 
   <script>
@@ -140,11 +191,16 @@
     let bestDiff = null;
     let bestTime = null;
 
-    const successSound = document.getElementById('success-sound');
-    const failSound = document.getElementById('fail-sound');
-    const alarmSound = document.getElementById('alarm-sound');
-    const scoreboard = document.getElementById("scoreboard");
-    const bestRecord = document.getElementById("bestRecord");
+    const successSound = new Audio("https://cdn.pixabay.com/audio/2023/03/21/audio_54b01c2e0d.mp3");
+    const failSound = new Audio("https://cdn.pixabay.com/audio/2023/05/03/audio_97fa244cbc.mp3");
+    const alarmSound = new Audio("https://cdn.pixabay.com/audio/2022/03/16/audio_108d6f55df.mp3");
+
+    function playSound(sound) {
+      sound.currentTime = 0;
+      sound.play().catch(e => {
+        console.warn("音声再生エラー：", e.message);
+      });
+    }
 
     function start() {
       if (running) clearInterval(interval);
@@ -171,40 +227,43 @@
       const display = document.getElementById("display");
       display.textContent = elapsed.toFixed(3) + " 秒";
       const result = document.getElementById("result");
-
       const container = document.getElementById("container");
+
       container.classList.remove("flash");
       setTimeout(() => container.classList.add("flash"), 10);
 
       let judgment = "";
+
       if (diff <= 0.05) {
         judgment = "成功";
         result.textContent = "あなたはまごうことなき綾人です";
         result.style.color = "#00ff87";
         document.body.classList.add("rainbow-bg");
-        successSound.play();
+        playSound(successSound);
 
         if (bestDiff === null || diff < bestDiff) {
           bestDiff = diff;
           bestTime = elapsed;
-          bestRecord.textContent = `ベスト記録：${bestTime.toFixed(3)} 秒（誤差 ±${bestDiff.toFixed(3)}）`;
+          document.getElementById("bestRecord").textContent =
+            `ベスト記録：${bestTime.toFixed(3)} 秒（誤差 ±${bestDiff.toFixed(3)}）`;
         }
 
       } else if (diff >= 1.0) {
         judgment = "カス";
         result.textContent = "おいおいおい条約と違うね";
         result.style.color = "#ffaa00";
-        alarmSound.play();
+        playSound(alarmSound);
       } else {
         judgment = "失敗";
         result.textContent = "残念！もう一度挑戦してみてください";
         result.style.color = "#ff5555";
-        failSound.play();
+        playSound(failSound);
       }
 
       const entry = document.createElement("p");
       entry.textContent = `${elapsed.toFixed(3)} 秒 - ${judgment}`;
-      scoreboard.appendChild(entry);
+      const scoreboard = document.getElementById("scoreboard");
+      scoreboard.prepend(entry); // 👈 新しい記録を先頭に追加（降順）
     }
   </script>
 </body>
