@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>綾人チャレンジ</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f8ff;
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            transition: background 0.5s ease;
+        }
+        .container {
+            text-align: center;
+            z-index: 1;
+        }
+        h1 {
+            font-size: 36px;
+            margin-bottom: 30px;
+            color: #2c3e50;
+        }
+        .timer {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 30px;
+            font-size: 18px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        #result {
+            margin-top: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        /* 虹色背景アニメーション */
+        .rainbow-bg {
+            animation: rainbow 3s linear infinite;
+            background: linear-gradient(270deg, red, orange, yellow, green, cyan, blue, violet);
+            background-size: 1400% 1400%;
+        }
+
+        @keyframes rainbow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>5.1秒で止めろ！</h1>
+        <div class="timer" id="display">0.000 秒</div>
+        <button onclick="start()">スタート</button>
+        <button onclick="stop()">ストップ</button>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        let startTime = null;
+        let interval = null;
+        let running = false;
+
+        function start() {
+            if (running) {
+                clearInterval(interval);
+            }
+
+            document.getElementById("result").textContent = "";
+            document.body.classList.remove("rainbow-bg"); // 背景リセット
+            document.body.style.backgroundColor = "#f0f8ff";
+
+            startTime = performance.now();
+            running = true;
+
+            interval = setInterval(() => {
+                const elapsed = (performance.now() - startTime) / 1000;
+                document.getElementById("display").textContent = elapsed.toFixed(3) + " 秒";
+            }, 10);
+        }
+
+        function stop() {
+            if (!running) return;
+
+            clearInterval(interval);
+            running = false;
+            const elapsed = (performance.now() - startTime) / 1000;
+            document.getElementById("display").textContent = elapsed.toFixed(3) + " 秒";
+            const diff = Math.abs(elapsed - 5.1);
+            const result = document.getElementById("result");
+
+            if (diff <= 0.05) {
+                result.textContent = "あなたはまごうことなき綾人です";
+                result.style.color = "green";
+                document.body.classList.add("rainbow-bg"); // 虹色背景に変更
+            } else if (diff >= 1.0) {
+                result.textContent = "おいおいおい条約と違うね";
+                result.style.color = "orange";
+                document.body.classList.remove("rainbow-bg");
+                document.body.style.backgroundColor = "#f0f8ff";
+            } else {
+                result.textContent = "残念！もう一度挑戦してみてください";
+                result.style.color = "red";
+                document.body.classList.remove("rainbow-bg");
+                document.body.style.backgroundColor = "#f0f8ff";
+            }
+        }
+    </script>
+</body>
+</html>
