@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>綾人チャレンジ</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #0f0f0f;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      overflow: hidden;
+      transition: background 0.5s ease;
+    }
+
+    .container {
+      text-align: center;
+      background: rgba(30, 30, 30, 0.85);
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 0 20px #00fff7, 0 0 60px #005bff;
+      max-width: 600px;
+      width: 90%;
+    }
+
+    h1 {
+      font-size: 40px;
+      margin-bottom: 30px;
+      color: #00ffe7;
+      text-shadow: 0 0 10px #00fff7;
+    }
+
+    .timer {
+      font-size: 64px;
+      margin-bottom: 30px;
+      color: #ffffff;
+      font-family: 'Courier New', monospace;
+      text-shadow: 0 0 15px #00ffd5;
+    }
+
+    button {
+      padding: 15px 40px;
+      font-size: 20px;
+      font-weight: bold;
+      margin: 10px;
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      background: linear-gradient(135deg, #005bff, #00ffee);
+      box-shadow: 0 0 10px #00ffe7;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px #00ffe7, 0 0 40px #005bff;
+    }
+
+    #result {
+      margin-top: 25px;
+      font-size: 26px;
+      font-weight: bold;
+      color: #fff;
+      text-shadow: 0 0 10px #fff;
+    }
+
+    .rainbow-bg {
+      animation: rainbow 3s linear infinite;
+      background: linear-gradient(270deg, red, orange, yellow, green, cyan, blue, violet);
+      background-size: 1400% 1400%;
+    }
+
+    @keyframes rainbow {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .flash {
+      animation: flash-effect 0.3s ease;
+    }
+
+    @keyframes flash-effect {
+      from { box-shadow: 0 0 100px #00fff7; }
+      to   { box-shadow: none; }
+    }
+
+    .scoreboard {
+      margin-top: 30px;
+      text-align: left;
+      color: #fff;
+      font-size: 18px;
+      max-height: 200px;
+      overflow-y: auto;
+      padding: 10px;
+      border-top: 1px solid #00ffe7;
+    }
+
+    .scoreboard p {
+      margin: 5px 0;
+      font-family: monospace;
+    }
+
+    .best-record {
+      margin-top: 10px;
+      font-size: 20px;
+      color: #00ffcc;
+      font-weight: bold;
+    }
+ 
+    .scoreboard {
+  margin-top: 30px;
+  text-align: left;
+  font-size: 18px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 10px;
+  border-top: 1px solid #00ffe7;
+  background: linear-gradient(to bottom, rgba(0,255,255,0.1), rgba(0,0,0,0.5));
+  border-radius: 10px;
+  box-shadow: inset 0 0 15px #00fff7;
+  backdrop-filter: blur(4px);
+  position: relative;
+  color: #fff;
+}
+
+/* スクロールバー装飾 (Chrome, Edge, Opera) */
+.scoreboard::-webkit-scrollbar {
+  width: 8px;
+}
+.scoreboard::-webkit-scrollbar-track {
+  background: rgba(0,0,0,0.4);
+}
+.scoreboard::-webkit-scrollbar-thumb {
+  background: linear-gradient(#00ffe7, #0077ff);
+  border-radius: 10px;
+}
+
+/* Firefox用スクロールバー */
+.scoreboard {
+  scrollbar-width: thin;
+  scrollbar-color: #00ffe7 rgba(0,0,0,0.4);
+}
+
+.scoreboard p {
+  margin: 6px 0;
+  font-family: monospace;
+  background: linear-gradient(to right, #00ffe7, #0077ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 6px #00fff7;
+  transition: all 0.3s ease;
+}
+
+.scoreboard p:hover {
+  transform: scale(1.03);
+  text-shadow: 0 0 12px #00f0ff, 0 0 24px #0077ff;
+}
+
+  </style>
+</head>
+<body>
+  <div class="container" id="container">
+    <h1>5.1秒で止めろ！</h1>
+    <div class="timer" id="display">0.000 秒</div>
+    <button onclick="start()">スタート</button>
+    <button onclick="stop()">ストップ</button>
+    <div id="result"></div>
+    <div class="best-record" id="bestRecord">ベスト記録：まだなし</div>
+    <div class="scoreboard">
+      <h3>スコア履歴</h3>
+      <div id="scoreboard"></div>
+    </div>
+  </div>
+
+  <!-- 効果音（CDN） -->
+  <audio id="success-sound" src="https://cdn.pixabay.com/audio/2023/03/21/audio_54b01c2e0d.mp3" preload="auto"></audio>
+  <audio id="fail-sound" src="https://cdn.pixabay.com/audio/2023/05/03/audio_97fa244cbc.mp3" preload="auto"></audio>
+  <audio id="alarm-sound" src="https://cdn.pixabay.com/audio/2022/03/16/audio_108d6f55df.mp3" preload="auto"></audio>
+
+  <script>
+    let startTime = null;
+    let interval = null;
+    let running = false;
+    let bestDiff = null;
+    let bestTime = null;
+
+    const successSound = new Audio("https://cdn.pixabay.com/audio/2023/03/21/audio_54b01c2e0d.mp3");
+    const failSound = new Audio("https://cdn.pixabay.com/audio/2023/05/03/audio_97fa244cbc.mp3");
+    const alarmSound = new Audio("https://cdn.pixabay.com/audio/2022/03/16/audio_108d6f55df.mp3");
+
+    function playSound(sound) {
+      sound.currentTime = 0;
+      sound.play().catch(e => {
+        console.warn("音声再生エラー：", e.message);
+      });
+    }
+
+    function start() {
+      if (running) clearInterval(interval);
+      document.getElementById("result").textContent = "";
+      document.body.classList.remove("rainbow-bg");
+      document.body.style.backgroundColor = "#0f0f0f";
+      startTime = performance.now();
+      running = true;
+
+      interval = setInterval(() => {
+        const elapsed = (performance.now() - startTime) / 1000;
+        document.getElementById("display").textContent = elapsed.toFixed(3) + " 秒";
+      }, 10);
+    }
+
+    function stop() {
+      if (!running) return;
+
+      clearInterval(interval);
+      running = false;
+
+      const elapsed = (performance.now() - startTime) / 1000;
+      const diff = Math.abs(elapsed - 5.1);
+      const display = document.getElementById("display");
+      display.textContent = elapsed.toFixed(3) + " 秒";
+      const result = document.getElementById("result");
+      const container = document.getElementById("container");
+
+      container.classList.remove("flash");
+      setTimeout(() => container.classList.add("flash"), 10);
+
+      let judgment = "";
+
+      if (diff <= 0.05) {
+        judgment = "成功";
+        result.textContent = "あなたはまごうことなき綾人です";
+        result.style.color = "#00ff87";
+        document.body.classList.add("rainbow-bg");
+        playSound(successSound);
+
+        if (bestDiff === null || diff < bestDiff) {
+          bestDiff = diff;
+          bestTime = elapsed;
+          document.getElementById("bestRecord").textContent =
+            `ベスト記録：${bestTime.toFixed(3)} 秒（誤差 ±${bestDiff.toFixed(3)}）`;
+        }
+
+      } else if (diff >= 1.0) {
+        judgment = "カス";
+        result.textContent = "おいおいおい条約と違うね";
+        result.style.color = "#ffaa00";
+        playSound(alarmSound);
+      } else {
+        judgment = "失敗";
+        result.textContent = "残念！もう一度挑戦してみてください";
+        result.style.color = "#ff5555";
+        playSound(failSound);
+      }
+
+      const entry = document.createElement("p");
+      entry.textContent = `${elapsed.toFixed(3)} 秒 - ${judgment}`;
+      const scoreboard = document.getElementById("scoreboard");
+      scoreboard.prepend(entry); // 👈 新しい記録を先頭に追加（降順）
+    }
+  </script>
+</body>
+</html>
